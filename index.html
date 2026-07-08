@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 柔佛州选极速出图 v26 (全云端同步+精准防冲突版)</title>
+    <title>2026 柔佛州选极速出图 v27 (精准指定 Logo 云端版)</title>
     <!-- 引入 JSZip 库以支持一键打包下载 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
@@ -51,11 +51,16 @@
         
         .advanced-fold-box { padding: 8px 15px; background: #F8FAFC; border-top: 1px solid var(--border-color); flex-shrink: 0; }
         .advanced-summary { font-size: 13px; font-weight: 900; color: var(--primary); padding: 2px 0; outline: none; user-select: none; }
-        .fold-content { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; padding-right: 4px; }
+        .fold-content { margin-top: 8px; display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
 
         .upload-section { background: #FFFFFF; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-        .upload-label { font-size: 11px; color: var(--text-main); font-weight: bold; display: block; margin-bottom: 4px; }
+        .upload-label { font-size: 11px; color: var(--text-main); font-weight: bold; display: block; margin-bottom: 6px; }
         
+        /* 独立上传按钮样式 */
+        .single-upload-btn { display: flex; flex-direction: column; background: #F1F5F9; border: 1px solid #CBD5E1; padding: 6px; border-radius: 6px; }
+        .single-upload-btn span { font-size: 10px; font-weight: 900; color: #0F172A; margin-bottom: 4px; text-align: center; }
+        .single-upload-btn input { font-size: 9px; width: 100%; }
+
         .slider-group { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
         .slider-group span { width: 65px; font-weight: bold; color: var(--text-main); font-size: 10px; }
         .slider-group input[type="range"] { flex: 1; accent-color: var(--primary); }
@@ -80,7 +85,7 @@
         .render-canvas { width: 1920px; height: 1080px; position: absolute; top: 0; left: 0; transform: scale(0.5); transform-origin: top left; display: flex; flex-direction: column; justify-content: space-between; padding: 60px 80px; box-sizing: border-box; background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%); }
         .content-layer { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; width: 100%; }
 
-        /* 修改：让标题靠右 */
+        /* 标题靠右 */
         .canvas-header { position: relative; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #CBD5E1; padding-bottom: 20px; height: 160px; flex-shrink: 0; }
         .left-logo-area { width: 280px; height: 130px; display: flex; justify-content: flex-start; align-items: center; overflow: hidden; position: relative; z-index: 2; }
         .left-logo-area img, .party-logo-frame img { max-width: 100% !important; max-height: 100% !important; width: auto !important; height: auto !important; object-fit: contain !important; display: block; }
@@ -130,7 +135,7 @@
 
     <div class="control-panel">
         <div class="global-header">
-            <h3 style="color: var(--text-main); margin-bottom: 3px; font-size: 19px;">柔佛极速出图 v26 (全云端+防冲突)</h3>
+            <h3 style="color: var(--text-main); margin-bottom: 3px; font-size: 19px;">柔佛极速出图 v27 (精准指定 Logo)</h3>
             <div class="global-toggle">
                 <button id="toggle-unoff-lead" class="active" onclick="setSeatStatus('unoff-lead')">非官方领先</button>
                 <button id="toggle-off-lead" onclick="setSeatStatus('off-lead')">官方领先</button>
@@ -154,16 +159,27 @@
             <details style="cursor: pointer;">
                 <summary class="advanced-summary">⚙️ 打开媒体Logo与大背景配置</summary>
                 <div class="fold-content">
+                    
+                    <!-- 恢复为7个独立的精准上传口 -->
                     <div class="upload-section">
-                        <span class="upload-label">📸 批量导入政党 Logo 资源 (上传即全网同步)：</span>
-                        <input type="file" multiple accept="image/*" onchange="loadPartyLogosBatch(this)" style="font-size: 12px; width: 100%;">
+                        <span class="upload-label">📸 政党 Logo 指定上传 (传完即刻同步云端)：</span>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                            <div class="single-upload-btn"><span>PH 希盟</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'PH')"></div>
+                            <div class="single-upload-btn"><span>PN 国盟</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'PN')"></div>
+                            <div class="single-upload-btn"><span>BN 国阵</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'BN')"></div>
+                            <div class="single-upload-btn"><span>BERSAMA</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'BERSAMA')"></div>
+                            <div class="single-upload-btn"><span>MUDA</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'MUDA')"></div>
+                            <div class="single-upload-btn"><span>ASLI</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'ASLI')"></div>
+                            <div class="single-upload-btn" style="grid-column: span 2;"><span>BEBAS 独立人士</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'BEBAS')"></div>
+                        </div>
                     </div>
+
                     <div class="upload-section">
-                        <span class="upload-label">📺 媒体 Logo 上传 (上传即全网同步)：</span>
+                        <span class="upload-label">📺 媒体 Logo 上传 (左上角)：</span>
                         <input type="file" accept="image/*" onchange="uploadLeftLogo(this)" style="font-size: 12px; width: 100%;">
                     </div>
                     <div class="upload-section">
-                        <span class="upload-label">🖼️ 大背景图片上传 (上传即全网同步)：</span>
+                        <span class="upload-label">🖼️ 大背景图片上传：</span>
                         <input type="file" accept="image/*" onchange="uploadBgElement(this)" style="font-size: 12px; width: 100%;">
                         <div id="bg-controls" style="display: none; margin-top: 10px;">
                             <div class="slider-group"><span>↔️ X位移:</span><input type="range" id="bg-pos-x" min="-1920" max="1920" value="0" oninput="updateBackgroundDOM()"></div>
@@ -240,7 +256,7 @@
         window.loadedLogosMemory = { 'BN': '', 'PH': '', 'PN': '', 'MUDA': '', 'BERSAMA': '', 'ASLI': '', 'BEBAS': '' };
         window.mediaLogoSaved = ""; window.customBgSaved = null; window.liveScoresData = {}; 
         
-        // 【核心】记录当前是否正在输入数据，避免云端数据打断操作
+        // 记录当前是否正在输入数据
         let isEditingCurrentSeat = false; 
 
         const partyConfigs = {
@@ -308,15 +324,16 @@
             "N56": { zh: "龟咯", en: "Kukup", candidates: [{ nameZh: "末依斯拉", nameEn: "Md Israk Abdullah", rawParty: "BN - UMNO" }, { nameZh: "谢梓康", nameEn: "Cheah Chee Hong", rawParty: "PH - PKR" }] }
         };
 
+        // 识别字符串属于哪个阵营
         function getBigAllianceKey(rawParty) {
             const up = rawParty ? rawParty.toUpperCase() : '';
             if (up.includes('PH') || up.includes('希盟') || up.includes('PKR') || up.includes('DAP') || up.includes('AMANAH')) return 'PH';
-            if (up.includes('PN') || up.includes('国盟') || up.includes('PAS') || up.includes('BERSATU') || up.includes('GERAKAN')) return 'PN';
+            if (up.includes('PN') || up.includes('国盟') || up.includes('PAS') || up.includes('BERSATU') || up.includes('GERAKAN') || up.includes('MIPP') || up.includes('PEJUANG')) return 'PN';
             if (up.includes('BN') || up.includes('国阵') || up.includes('UMNO') || up.includes('MCA') || up.includes('MIC')) return 'BN';
             if (up.includes('MUDA')) return 'MUDA';
             if (up.includes('BERSAMA') || up.includes('同心')) return 'BERSAMA';
             if (up.includes('ASLI') || up.includes('土著')) return 'ASLI';
-            if (up.includes('BEBAS') || up.includes('独立')) return 'BEBAS';
+            if (up.includes('BEBAS') || up.includes('独立') || up.includes('PSM') || up.includes('社会主义党')) return 'BEBAS';
             return 'BEBAS';
         }
 
@@ -332,26 +349,20 @@
             }
             selector.value = "N14"; 
 
-            // 【核心防冲突】云端数据接收与静默更新
+            // 防冲突：监听云端选区成绩
             database.ref('johor_2026_scores/liveScoresData').on('value', (snapshot) => {
                 const cloudData = snapshot.val() || {};
                 const currentSeat = document.getElementById('seat-selector').value;
                 
                 for (let key in cloudData) {
-                    // 如果正在编辑当前选区，则跳过覆盖该选区的本地修改，避免打断输入
-                    if (key === currentSeat && isEditingCurrentSeat) {
-                        continue;
-                    }
+                    if (key === currentSeat && isEditingCurrentSeat) continue;
                     window.liveScoresData[key] = cloudData[key];
                 }
                 
-                // 如果用户没有在输入，自动刷新画面以显示云端最新数据
-                if (!isEditingCurrentSeat) {
-                    loadSeatData(); 
-                }
+                if (!isEditingCurrentSeat) loadSeatData(); 
             });
 
-            // 【全云端配置同步】监听 Logo 及背景的云端更新
+            // 监听 Logo 等全云端配置同步
             database.ref('johor_2026_scores/config').on('value', (snapshot) => {
                 const configData = snapshot.val() || {};
                 let needRender = false;
@@ -382,36 +393,24 @@
             } catch(e) {}
         }
 
-        // 下拉选单变更时，重置编辑状态
         function changeSeatDropdown() {
             isEditingCurrentSeat = false;
             loadSeatData();
         }
 
-        function loadPartyLogosBatch(input) {
-            if (input.files) {
-                let processed = 0;
-                Array.from(input.files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const name = file.name.toUpperCase();
-                        if (name.includes('BN') || name.includes('BARISAN')) window.loadedLogosMemory['BN'] = e.target.result;
-                        else if (name.includes('PH') || name.includes('HARAPAN')) window.loadedLogosMemory['PH'] = e.target.result;
-                        else if (name.includes('PN') || name.includes('PERIKATAN')) window.loadedLogosMemory['PN'] = e.target.result;
-                        else if (name.includes('MUDA')) window.loadedLogosMemory['MUDA'] = e.target.result;
-                        else if (name.includes('BERSAMA')) window.loadedLogosMemory['BERSAMA'] = e.target.result;
-                        else if (name.includes('ASLI')) window.loadedLogosMemory['ASLI'] = e.target.result;
-                        else if (name.includes('BEBAS') || name.includes('INDEPENDENT')) window.loadedLogosMemory['BEBAS'] = e.target.result;
-                        
-                        processed++;
-                        if (processed === input.files.length) {
-                            // 立即同步到云端！
-                            database.ref('johor_2026_scores/config/logos').set(window.loadedLogosMemory);
-                            renderImageCanvas();
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                });
+        // --- 核心修改：指定档位精准上传，完全抛弃乱猜文件名的做法 ---
+        function uploadSinglePartyLogo(input, partyKey) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 1. 存入内存
+                    window.loadedLogosMemory[partyKey] = e.target.result;
+                    // 2. 直接且精准地推送到云端专属格子里
+                    database.ref('johor_2026_scores/config/logos/' + partyKey).set(e.target.result);
+                    // 3. 立即重绘画布
+                    renderImageCanvas();
+                };
+                reader.readAsDataURL(input.files[0]);
             }
         }
 
@@ -537,23 +536,20 @@
 
         function syncBackupData(seatKey, index, field, value) {
             if (!window.liveScoresData[seatKey]) return;
-            // 标记正在输入
             isEditingCurrentSeat = true;
             if (field === 'votes') window.liveScoresData[seatKey].candidates[index][field] = parseInt(value) || 0;
             else window.liveScoresData[seatKey].candidates[index][field] = value;
             renderImageCanvas();
         }
 
-        // 【核心】仅抓取并保存单一选区节点
         function manualSaveToLocal() {
             const seatKey = document.getElementById('seat-selector').value;
             const seatData = window.liveScoresData[seatKey];
             if(!seatData) return;
             
-            // 独立节点更新路径：liveScoresData/N35
             database.ref('johor_2026_scores/liveScoresData/' + seatKey).set(seatData)
                 .then(() => {
-                    isEditingCurrentSeat = false; // 保存成功后，解锁编辑状态
+                    isEditingCurrentSeat = false; 
                     alert(`🎉 【${seatKey}】的票数及状态已成功独立同步至云端！不影响其他同事的操作。`);
                 })
                 .catch((error) => {
@@ -753,7 +749,6 @@
                     const enW = ctx.measureText(titleEn).width;
                     
                     const totalW = zhW + enW;
-                    // 【修改点】让文字完美贴齐在右侧安全边距(1850)
                     const startX = 1850 - totalW; 
 
                     ctx.fillStyle = '#0F172A';
