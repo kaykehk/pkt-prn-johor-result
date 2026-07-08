@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 柔佛州选极速出图 v24 (选区状态云端独立同步版)</title>
+    <title>2026 柔佛州选极速出图 v26 (全云端同步+精准防冲突版)</title>
+    <!-- 引入 JSZip 库以支持一键打包下载 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
@@ -79,11 +80,12 @@
         .render-canvas { width: 1920px; height: 1080px; position: absolute; top: 0; left: 0; transform: scale(0.5); transform-origin: top left; display: flex; flex-direction: column; justify-content: space-between; padding: 60px 80px; box-sizing: border-box; background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%); }
         .content-layer { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; width: 100%; }
 
+        /* 修改：让标题靠右 */
         .canvas-header { position: relative; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #CBD5E1; padding-bottom: 20px; height: 160px; flex-shrink: 0; }
         .left-logo-area { width: 280px; height: 130px; display: flex; justify-content: flex-start; align-items: center; overflow: hidden; position: relative; z-index: 2; }
         .left-logo-area img, .party-logo-frame img { max-width: 100% !important; max-height: 100% !important; width: auto !important; height: auto !important; object-fit: contain !important; display: block; }
         
-        .header-title-box { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: baseline; gap: 20px; width: max-content; z-index: 1; }
+        .header-title-box { display: flex; align-items: baseline; gap: 20px; z-index: 1; text-align: right; margin-left: auto; }
         .title-seat-zh { font-size: 85px; font-weight: 900; color: #0F172A; letter-spacing: 2px; }
         .title-seat-en { font-size: 85px; font-weight: 900; color: #64748B; letter-spacing: 2px; }
 
@@ -128,7 +130,7 @@
 
     <div class="control-panel">
         <div class="global-header">
-            <h3 style="color: var(--text-main); margin-bottom: 3px; font-size: 19px;">柔佛极速出图 v24 (独立选区同步版)</h3>
+            <h3 style="color: var(--text-main); margin-bottom: 3px; font-size: 19px;">柔佛极速出图 v26 (全云端+防冲突)</h3>
             <div class="global-toggle">
                 <button id="toggle-unoff-lead" class="active" onclick="setSeatStatus('unoff-lead')">非官方领先</button>
                 <button id="toggle-off-lead" onclick="setSeatStatus('off-lead')">官方领先</button>
@@ -138,7 +140,7 @@
 
         <div class="selector-box">
             <label style="font-size: 13px; color: var(--primary); font-weight: 900; display: block; margin-bottom: 8px;">选择当前开票选区</label>
-            <select id="seat-selector" onchange="loadSeatData()"></select>
+            <select id="seat-selector" onchange="changeSeatDropdown()"></select>
         </div>
 
         <div class="inputs-container" id="inputs-box"></div>
@@ -153,15 +155,15 @@
                 <summary class="advanced-summary">⚙️ 打开媒体Logo与大背景配置</summary>
                 <div class="fold-content">
                     <div class="upload-section">
-                        <span class="upload-label">📸 批量导入政党 Logo 资源：</span>
+                        <span class="upload-label">📸 批量导入政党 Logo 资源 (上传即全网同步)：</span>
                         <input type="file" multiple accept="image/*" onchange="loadPartyLogosBatch(this)" style="font-size: 12px; width: 100%;">
                     </div>
                     <div class="upload-section">
-                        <span class="upload-label">📺 媒体 Logo 上传 (左上角)：</span>
+                        <span class="upload-label">📺 媒体 Logo 上传 (上传即全网同步)：</span>
                         <input type="file" accept="image/*" onchange="uploadLeftLogo(this)" style="font-size: 12px; width: 100%;">
                     </div>
                     <div class="upload-section">
-                        <span class="upload-label">🖼️ 大背景图片上传：</span>
+                        <span class="upload-label">🖼️ 大背景图片上传 (上传即全网同步)：</span>
                         <input type="file" accept="image/*" onchange="uploadBgElement(this)" style="font-size: 12px; width: 100%;">
                         <div id="bg-controls" style="display: none; margin-top: 10px;">
                             <div class="slider-group"><span>↔️ X位移:</span><input type="range" id="bg-pos-x" min="-1920" max="1920" value="0" oninput="updateBackgroundDOM()"></div>
@@ -217,6 +219,7 @@
         </div>
     </div>
 
+    <!-- ================= 核心 Firebase 多机联机 SDK 引入 ================= -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
@@ -236,6 +239,9 @@
 
         window.loadedLogosMemory = { 'BN': '', 'PH': '', 'PN': '', 'MUDA': '', 'BERSAMA': '', 'ASLI': '', 'BEBAS': '' };
         window.mediaLogoSaved = ""; window.customBgSaved = null; window.liveScoresData = {}; 
+        
+        // 【核心】记录当前是否正在输入数据，避免云端数据打断操作
+        let isEditingCurrentSeat = false; 
 
         const partyConfigs = {
             'BN': { bg: '#002266' }, 'PH': { bg: '#E31B23' }, 'PN': { bg: '#002F5F' },
@@ -251,14 +257,14 @@
             "N5": { zh: "丁能", en: "Tenang", candidates: [{ nameZh: "茜蒂爱莎", nameEn: "Siti Aisyah Zobir", rawParty: "BEBAS" }, { nameZh: "诺玛拉", nameEn: "Normala Sudirman", rawParty: "PN - PAS" }, { nameZh: "依丽娅娜蒂拉", nameEn: "Elia Nadira Sabudin", rawParty: "PH - AMANAH" }, { nameZh: "阿查哈", nameEn: "Mohd Azahar Ibrahim", rawParty: "BN - UMNO" }] },
             "N6": { zh: "彼咯", en: "Bekok", candidates: [{ nameZh: "陈宗", nameEn: "Tan Chong", rawParty: "BN - MCA" }, { nameZh: "郑育娟", nameEn: "Tay Yok Jiuen", rawParty: "PH - DAP" }] },
             "N7": { zh: "武吉哈逢", en: "Bukit Kepong", candidates: [{ nameZh: "苏巴拉玛尼", nameEn: "C.Subramani", rawParty: "PH - PKR" }, { nameZh: "阿末沙礼", nameEn: "Ahmad Syar'e Yusof", rawParty: "BN - UMNO" }, { nameZh: "萨鲁丁", nameEn: "Sahruddin Jamal", rawParty: "PN - BERSATU" }] },
-            "N8": { zh: "武吉巴西", en: "Bukit Pasir", candidates: [{ nameZh: "依扎", nameEn: "Mohd Idzharruddin Mohd Nasirruddin", rawParty: "PN - BERSATU" }, { nameZh: "莫哈末那吉", nameEn: "Muhd Najib Lep", rawParty: "PH - AMANAH" }, { nameZh: "莫哈末法兹里", nameEn: "Mohamad Fazli Mohamad Salleh", rawParty: "BN - UMNO" }] },
+            "N8": { zh: "武吉巴西", en: "Bukit Pasir", candidates: [{ nameZh: "依扎", nameEn: "Mohd Idzharruddin Mohd Nasirruddin", rawParty: "PN - BERSATU" }, { nameZh: "莫哈末那吉", nameEn: "Mohd Najib", rawParty: "PH - AMANAH" }, { nameZh: "莫哈末法兹里", nameEn: "Mohamad Fazli Mohamad Salleh", rawParty: "BN - UMNO" }] },
             "N9": { zh: "甘蜜", en: "Gambir", candidates: [{ nameZh: "沙利翰", nameEn: "Sahrihan Jani", rawParty: "BN - UMNO" }, { nameZh: "莫哈末诺", nameEn: "Mohd Nor Mohd Yusof", rawParty: "PH - PKR" }, { nameZh: "苏拉雅", nameEn: "Suraya Sulaiman", rawParty: "PN - Pejuang" }] },
             "N10": { zh: "东甲", en: "Tangkak", candidates: [{ nameZh: "侯振德", nameEn: "Haw Chin Teck", rawParty: "BN - MCA" }, { nameZh: "黄俊历", nameEn: "Ee Chin Li", rawParty: "PH - DAP" }] },
             "N11": { zh: "实廊", en: "Serom", candidates: [{ nameZh: "娜希拉阿菲卡", nameEn: "Nadhirah Afiqah Abdull Rahim", rawParty: "BN - UMNO" }, { nameZh: "玛菲兹", nameEn: "Mahfidz Omar", rawParty: "PN - BERSATU" }, { nameZh: "阿末那扎里", nameEn: "Ahmad Nazari Abd Hamid", rawParty: "PH - AMANAH" }] },
             "N12": { zh: "文打烟", en: "Bentayan", candidates: [{ nameZh: "黄益豪", nameEn: "Ng Yak Howe", rawParty: "PH - DAP" }, { nameZh: "蔡利发", nameEn: "Chua Lee Huat", rawParty: "BN - MCA" }] },
             "N13": { zh: "新邦二南", en: "Simpang Jeram", candidates: [{ nameZh: "纳兹里", nameEn: "Nazri Abd Rahman", rawParty: "PH - AMANAH" }, { nameZh: "阿兹曼", nameEn: "Azman Ismail", rawParty: "BN - UMNO" }, { nameZh: "爱妮哈兹卡", nameEn: "Ainie Haziqah Shafii", rawParty: "MUDA" }, { nameZh: "阿尔希德", nameEn: "Arshed Yahya @ Awang", rawParty: "PN - PAS" }] },
             "N14": { zh: "武吉南宁", en: "Bukit Naning", candidates: [{ nameZh: "杰卡纳丹", nameEn: "Jeghanaathan", rawParty: "BEBAS" }, { nameZh: "耶斯鲁丁", nameEn: "Md Ysahrudin Kusni", rawParty: "PH - PKR" }, { nameZh: "莫哈末加扎里", nameEn: "Mohd Ghazali Sabari @ Atan", rawParty: "BN - UMNO" }, { nameZh: "依斯干达", nameEn: "Iskandar Md Alias", rawParty: "BERSAMA" }, { nameZh: "莫哈末拉兹", nameEn: "Mohd Radzi Amin", rawParty: "PN - BERSATU" }] },
-            "N15": { zh: "马哈拉尼", en: "Maharani", candidates: [{ nameZh: "莫哈末安努亚", nameEn: "Mohamad Anuar Hayan", rawParty: "PN - PAS" }, { nameZh: "阿沙里", nameEn: "Ashari Md Sarip", rawParty: "BN - UMNO" }, { nameZh: "阿米尔克", nameEn: "Muhammad Amir Fiqri", rawParty: "MUDA" }, { nameZh: "达吉乌丁", nameEn: "Muhammad Taqiuddin Cheman", rawParty: "PH - AMANAH" }] },
+            "N15": { zh: "马哈拉尼", en: "Maharani", candidates: [{ nameZh: "莫哈末安努亚", nameEn: "Mohamad Anuar Hayan", rawParty: "PN - PAS" }, { nameZh: "阿沙里", nameEn: "Ashari Md Sarip", rawParty: "BN - UMNO" }, { nameZh: "阿米尔杰克", nameEn: "Amir Jack", rawParty: "MUDA" }, { nameZh: "达吉乌丁", nameEn: "Muhammad Taqiuddin Cheman", rawParty: "PH - AMANAH" }] },
             "N16": { zh: "双溪巴浪", en: "Sungai Balang", candidates: [{ nameZh: "史拉末达金", nameEn: "Selamat Takim", rawParty: "BN - UMNO" }, { nameZh: "莫哈末阿敏", nameEn: "Muhammad Amin Sailan", rawParty: "PN - PAS" }, { nameZh: "艾娜苏拉雅", nameEn: "Ayna Soraya Badaruddin", rawParty: "PH - PKR" }] },
             "N17": { zh: "圣模那", en: "Semerah", candidates: [{ nameZh: "莫哈末法立", nameEn: "Mohd Fared Mohd Khalid", rawParty: "BN - UMNO" }, { nameZh: "哈林奥曼", nameEn: "Halim Kepol", rawParty: "PN - PAS" }, { nameZh: "莫哈末库赞", nameEn: "Mohd Khuzzan Abu Bakar", rawParty: "PH - PKR" }] },
             "N18": { zh: "铁山", en: "Sri Medan", candidates: [{ nameZh: "阿末罗斯迪", nameEn: "Ahmad Rosdi Bahari", rawParty: "PN - PAS" }, { nameZh: "祖古纳因", nameEn: "Zulkurnain Kamisan", rawParty: "BN - UMNO" }, { nameZh: "希山", nameEn: "Hishamuddin Ishak", rawParty: "PH - PKR" }] },
@@ -275,14 +281,14 @@
             "N29": { zh: "马哥打", en: "Mahkota", candidates: [{ nameZh: "哈密", nameEn: "Abd Hamid Ali", rawParty: "BERSAMA" }, { nameZh: "赛富星", nameEn: "Syed Hussien Syed Abdullah", rawParty: "BN - UMNO" }, { nameZh: "莫哈末祖汉", nameEn: "Ahmad Zuhan Md Zain", rawParty: "PH - AMANAH" }] },
             "N30": { zh: "巴罗", en: "Paloh", candidates: [{ nameZh: "卡马瓦兰", nameEn: "G. Kamaleswaren", rawParty: "BEBAS" }, { nameZh: "鲁本", nameEn: "A. Ruban", rawParty: "PH - DAP" }, { nameZh: "李廷汉", nameEn: "Lee Ting Han", rawParty: "BN - MCA" }, { nameZh: "吉华古马", nameEn: "D. Jeevakumar", rawParty: "PN - MIPP" }] },
             "N31": { zh: "加亨", en: "Kahang", candidates: [{ nameZh: "鲁金德兰", nameEn: "V. Rugendren", rawParty: "BN - MIC" }, { nameZh: "莫哈末萨比里", nameEn: "Mohd Sabri Abd Kadir", rawParty: "PH - AMANAH" }, { nameZh: "玛兹兰", nameEn: "Mazlan Bujang", rawParty: "PN - PAS" }] },
-            "N32": { zh: "兴楼", en: "Endau", candidates: [{ nameZh: "哈斯努哈吉米", nameEn: "Hasnul Hakimi Hussien", rawParty: "PN - PAS" }, { nameZh: "佳蒂", nameEn: "Jati Awang", rawParty: "ASLI" }, { nameZh: "赛弗尼占", nameEn: "Saiful Nizam Samat", rawParty: "PH - PKR" }, { nameZh: "艾薇雅", nameEn: "Alwiyah Talib", rawParty: "BN - UMNO" }] },
-            "N33": { zh: "丁加洛", en: "Tenggaroh", candidates: [{ nameZh: "莫哈末阿米鲁", nameEn: "Muhamad Amerul Muhamad", rawParty: "PN - BERSATU" }, { nameZh: "莫哈末开米", nameEn: "Mohd Youzaimi Yusof", rawParty: "BN - UMNO" }, { nameZh: "莫哈末尤索", nameEn: "Md Yusof Dawam", rawParty: "PH - PKR" }] },
+            "N32": { zh: "兴楼", en: "Endau", candidates: [{ nameZh: "哈斯努哈吉米", nameEn: "Hasnul Hakimi Hussien", rawParty: "PN - PAS" }, { nameZh: "甲迪", nameEn: "Jati Awang", rawParty: "ASLI" }, { nameZh: "赛弗尼占", nameEn: "Saiful Nizam Samat", rawParty: "PH - PKR" }, { nameZh: "艾薇雅", nameEn: "Alwiyah Talib", rawParty: "BN - UMNO" }] },
+            "N33": { zh: "丁加洛", en: "Tenggaroh", candidates: [{ nameZh: "莫哈末阿米鲁", nameEn: "Muhamad Amerul Muhamad", rawParty: "PN - BERSATU" }, { nameZh: "莫哈末尤再米", nameEn: "Mohd Youzaimi Yusof", rawParty: "BN - UMNO" }, { nameZh: "莫哈末尤索", nameEn: "Md Yusof Dawam", rawParty: "PH - PKR" }] },
             "N34": { zh: "班底", en: "Panti", candidates: [{ nameZh: "莫哈末纳杰", nameEn: "Muhammad Naqib Md Ghazali", rawParty: "BN - UMNO" }, { nameZh: "莫哈末阿利亚斯", nameEn: "Alias Rasman", rawParty: "PN - BERSATU" }, { nameZh: "阿末丹尼尔", nameEn: "Ahmad Daniel Sharudin", rawParty: "PH - AMANAH" }] },
             "N35": { zh: "巴西拉惹", en: "Pasir Raja", candidates: [{ nameZh: "阿汉峇峇", nameEn: "Adham Baba", rawParty: "BN - UMNO" }, { nameZh: "尤哈妮达", nameEn: "Yuhanita Yunan", rawParty: "PN - PAS" }, { nameZh: "莫哈末法哈鲁丁", nameEn: "Mohd Fakharuddin Moslim", rawParty: "PH - PKR" }] },
             "N36": { zh: "素里里", en: "Sedili", candidates: [{ nameZh: "阿米鲁", nameEn: "Amirul Huzni Onn", rawParty: "PH - AMANAH" }, { nameZh: "末再迪", nameEn: "Muszaide Makmor", rawParty: "BN - UMNO" }, { nameZh: "拉士曼", nameEn: "Rasman Ithnain", rawParty: "PN - BERSATU" }] },
             "N37": { zh: "旧柔佛", en: "Johor Lama", candidates: [{ nameZh: "艾莎依沙", nameEn: "Aisah Esa", rawParty: "PN - BERSATU" }, { nameZh: "达尼斯胡斯曼", nameEn: "Danish Hossman Abd Rahman", rawParty: "PH - PKR" }, { nameZh: "诺丽扎", nameEn: "Norlizah Noh", rawParty: "BN - UMNO" }] },
             "N38": { zh: "本那哇", en: "Penawar", candidates: [{ nameZh: "菲兹雅", nameEn: "Fauziah Misri", rawParty: "BN - UMNO" }, { nameZh: "莫哈末沙瓦鲁丁", nameEn: "Mohd Sawaludin Salleh", rawParty: "PH - AMANAH" }, { nameZh: "法依鲁尼扎", nameEn: "Fairulnizar Rahmat", rawParty: "PN - BERSATU" }] },
-            "N39": { zh: "苏腊", en: "Tanjung Surat", candidates: [{ nameZh: "法依祖", nameEn: "Faizul Abdul Ghani", rawParty: "PH - PKR" }, { nameZh: "阿兹南", name南: "Aznan Tamin", rawParty: "BN - UMNO" }] },
+            "N39": { zh: "苏腊", en: "Tanjung Surat", candidates: [{ nameZh: "法依祖", nameEn: "Faizul Abdul Ghani", rawParty: "PH - PKR" }, { nameZh: "阿兹南", nameEn: "Aznan Tamin", rawParty: "BN - UMNO" }] },
             "N40": { zh: "地南", en: "Tiram", candidates: [{ nameZh: "阿都哈林", nameEn: "Abdul Halim Suleiman", rawParty: "BN - UMNO" }, { nameZh: "颜丽丽", nameEn: "Nor Zulaila Abd Ghani", rawParty: "PH - DAP" }, { nameZh: "哈利德", nameEn: "Harith Fakhrudin Abdul Malek", rawParty: "BERSAMA" }, { nameZh: "凯希鲁慕塔那扎", nameEn: "Khirul Muntanazar Ismail", rawParty: "PN - PAS" }] },
             "N41": { zh: "优景镇", en: "Puteri Wangsa", candidates: [{ nameZh: "尼古拉斯", nameEn: "Nicholas Paul Vincent", rawParty: "BERSAMA" }, { nameZh: "王伟祥", nameEn: "Wang Wee Siong", rawParty: "BEBAS" }, { nameZh: "马智礼", nameEn: "Maszlee Malik", rawParty: "PH - PKR" }, { nameZh: "拉菲雅", nameEn: "Rashifa Aljunied", rawParty: "MUDA" }, { nameZh: "张孳璘", nameEn: "Teow Chia Ling", rawParty: "BN - MCA" }] },
             "N42": { zh: "柔佛再也", en: "Johor Jaya", candidates: [{ nameZh: "林昀标", nameEn: "Lim Hun Peaw", rawParty: "BEBAS" }, { nameZh: "刘毅龙", nameEn: "Lau Yi Leong", rawParty: "BERSAMA" }, { nameZh: "陈珊珊", nameEn: "Chan San San", rawParty: "BN - MCA" }, { nameZh: "李汶颖", nameEn: "Lee Wern Yiing", rawParty: "PH - DAP" }] },
@@ -290,8 +296,8 @@
             "N44": { zh: "拉庆", en: "Larkin", candidates: [{ nameZh: "罗思娜", nameEn: "Norsinah Abu", rawParty: "BERSAMA" }, { nameZh: "苏海山", nameEn: "Suhaizan Kayat", rawParty: "PH - AMANAH" }, { nameZh: "海利", nameEn: "Mohd Hairi Mad Shah", rawParty: "BN - UMNO" }] },
             "N45": { zh: "士都兰", en: "Stulang", candidates: [{ nameZh: "曾笳恩", nameEn: "Andrew Chen Kah Eng", rawParty: "PH - DAP" }, { nameZh: "陈玟辛", nameEn: "Stanley Tan", rawParty: "BERSAMA" }, { nameZh: "林振荣", nameEn: "Lim Chin Eng @ Roland Lim", rawParty: "PN - BERSATU" }, { nameZh: "黄成兴", nameEn: "Bong Seng Heng", rawParty: "BN - MCA" }] },
             "N46": { zh: "柏岭", en: "Perling", candidates: [{ nameZh: "峇迪尔申文", nameEn: "P. Pannir Selvam", rawParty: "BN - MIC" }, { nameZh: "郑凯聪", nameEn: "Alan Tee Boon Tsong", rawParty: "PH - DAP" }, { nameZh: "巫伟汉", nameEn: "Boo Wei Han", rawParty: "BERSAMA" }] },
-            "N47": { zh: "甘拔士", en: "Kempas", candidates: [{ nameZh: "蓝里", nameEn: "Ramlee Bohani", rawParty: "BN - UMNO" }, { nameZh: "莫哈末法依祖丁", nameEn: "Muhammad Faezuddin Mohd Puad", rawParty: "PH - PKR" }, { nameZh: "莎拉玛", nameEn: "Salamahafifi Mohd Yusnaieny", rawParty: "BERSAMA" }] },
-            "N48": { zh: "士姑来", en: "Skudai", candidates: [{ nameZh: "陈贤绮", nameEn: "Tan Hiang Kee", rawParty: "BN - MCA" }, { nameZh: "谢艾明", nameEn: "Kartiyaini Jeyapalan", rawParty: "PH - DAP" }, { nameZh: "蔡明忠", nameEn: "Eugene Chua Meng Chong", rawParty: "BERSAMA" }, { nameZh: "阿米尔", nameEn: "Amir Syafiq Ameer Soekre", rawParty: "PSM" }] },
+            "N47": { zh: "甘拔士", en: "Kempas", candidates: [{ nameZh: "南利", nameEn: "Ramlee Bohani", rawParty: "BN - UMNO" }, { nameZh: "莫哈末法依祖丁", nameEn: "Muhammad Faezuddin Mohd Puad", rawParty: "PH - PKR" }, { nameZh: "莎拉玛", nameEn: "Salamahafifi Mohd Yusnaieny", rawParty: "BERSAMA" }] },
+            "N48": { zh: "士姑来", en: "Skudai", candidates: [{ nameZh: "陈贤绮", nameEn: "Tan Hiang Kee", rawParty: "BN - MCA" }, { nameZh: "佳蒂", nameEn: "Kartiyaini Jeyapalan", rawParty: "PH - DAP" }, { nameZh: "蔡明忠", nameEn: "Eugene Chua Meng Chong", rawParty: "BERSAMA" }, { nameZh: "谢艾明", nameEn: "Amir Syafiq", rawParty: "PSM" }] },
             "N49": { zh: "依斯干达城", en: "Kota Iskandar", candidates: [{ nameZh: "安娜帕拉维娜", nameEn: "S. Anna Pravina", rawParty: "PN - MIPP" }, { nameZh: "祖基菲里", nameEn: "Dzulkefly Ahmad", rawParty: "PH - AMANAH" }, { nameZh: "班达", nameEn: "Pandak Ahmad", rawParty: "BN - UMNO" }, { nameZh: "沙鲁丁", nameEn: "Sahrudin Omar", rawParty: "BERSAMA" }] },
             "N50": { zh: "武吉柏迈", en: "Bukit Permai", candidates: [{ nameZh: "艾迪", nameEn: "Muhammad Aidil Riduan Mohd Yusof", rawParty: "BERSAMA" }, { nameZh: "嘉福尼", nameEn: "Mohd Jafni Md Shukor", rawParty: "BN - UMNO" }, { nameZh: "沙福万", nameEn: "Mohamad Shafwan Ani", rawParty: "PH - DAP" }, { nameZh: "丽娜", nameEn: "M. Lina Manoh", rawParty: "PN - MIPP" }] },
             "N51": { zh: "武吉峇都", en: "Bukit Batu", candidates: [{ nameZh: "古玛兰", nameEn: "R. Kumaran", rawParty: "BN - MIC" }, { nameZh: "卡马鲁札曼", nameEn: "Kamaruzaman Ali", rawParty: "BEBAS" }, { nameZh: "妲密丽", nameEn: "G. Tamili", rawParty: "BERSAMA" }, { nameZh: "张善深", nameEn: "Chiong Sen Sern", rawParty: "PH - PKR" }, { nameZh: "普仁", nameEn: "M. Premanand", rawParty: "MUDA" }] },
@@ -326,16 +332,60 @@
             }
             selector.value = "N14"; 
 
+            // 【核心防冲突】云端数据接收与静默更新
             database.ref('johor_2026_scores/liveScoresData').on('value', (snapshot) => {
-                const cloudData = snapshot.val();
-                window.liveScoresData = cloudData || {};
-                loadSeatData(); 
+                const cloudData = snapshot.val() || {};
+                const currentSeat = document.getElementById('seat-selector').value;
+                
+                for (let key in cloudData) {
+                    // 如果正在编辑当前选区，则跳过覆盖该选区的本地修改，避免打断输入
+                    if (key === currentSeat && isEditingCurrentSeat) {
+                        continue;
+                    }
+                    window.liveScoresData[key] = cloudData[key];
+                }
+                
+                // 如果用户没有在输入，自动刷新画面以显示云端最新数据
+                if (!isEditingCurrentSeat) {
+                    loadSeatData(); 
+                }
+            });
+
+            // 【全云端配置同步】监听 Logo 及背景的云端更新
+            database.ref('johor_2026_scores/config').on('value', (snapshot) => {
+                const configData = snapshot.val() || {};
+                let needRender = false;
+                
+                if (configData.logos) { 
+                    window.loadedLogosMemory = configData.logos; 
+                    needRender = true; 
+                }
+                if (configData.mediaLogo) {
+                    window.mediaLogoSaved = configData.mediaLogo;
+                    document.getElementById('view-left-logo-frame').innerHTML = `<img src="${window.mediaLogoSaved}">`;
+                    needRender = true;
+                }
+                if (configData.bgData) {
+                    window.customBgSaved = configData.bgData;
+                    document.getElementById('bg-controls').style.display = 'block';
+                    updateBackgroundDOM();
+                    needRender = true;
+                }
+                if (needRender && !isEditingCurrentSeat) renderImageCanvas();
             });
 
             try {
                 const cachedLogos = localStorage.getItem('johor_v13_logos');
-                if (cachedLogos) window.loadedLogosMemory = JSON.parse(cachedLogos);
+                if (cachedLogos && Object.keys(window.loadedLogosMemory).length === 0) {
+                    window.loadedLogosMemory = JSON.parse(cachedLogos);
+                }
             } catch(e) {}
+        }
+
+        // 下拉选单变更时，重置编辑状态
+        function changeSeatDropdown() {
+            isEditingCurrentSeat = false;
+            loadSeatData();
         }
 
         function loadPartyLogosBatch(input) {
@@ -352,9 +402,11 @@
                         else if (name.includes('BERSAMA')) window.loadedLogosMemory['BERSAMA'] = e.target.result;
                         else if (name.includes('ASLI')) window.loadedLogosMemory['ASLI'] = e.target.result;
                         else if (name.includes('BEBAS') || name.includes('INDEPENDENT')) window.loadedLogosMemory['BEBAS'] = e.target.result;
+                        
                         processed++;
                         if (processed === input.files.length) {
-                            localStorage.setItem('johor_v13_logos', JSON.stringify(window.loadedLogosMemory));
+                            // 立即同步到云端！
+                            database.ref('johor_2026_scores/config/logos').set(window.loadedLogosMemory);
                             renderImageCanvas();
                         }
                     };
@@ -368,7 +420,7 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     window.mediaLogoSaved = e.target.result;
-                    document.getElementById('view-left-logo-frame').innerHTML = `<img src="${window.mediaLogoSaved}">`;
+                    database.ref('johor_2026_scores/config/mediaLogo').set(window.mediaLogoSaved);
                 };
                 reader.readAsDataURL(input.files[0]);
             }
@@ -379,8 +431,7 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     window.customBgSaved = e.target.result;
-                    document.getElementById('bg-controls').style.display = 'block';
-                    updateBackgroundDOM();
+                    database.ref('johor_2026_scores/config/bgData').set(window.customBgSaved);
                 };
                 reader.readAsDataURL(input.files[0]);
             }
@@ -396,10 +447,10 @@
             bgLayer.innerHTML = `<img src="${window.customBgSaved}" style="position:absolute; left:0; top:0; transform-origin: top left; transform: translate(${x}px, ${y}px) scale(${scale}); opacity:${opacity};">`;
         }
 
-        // 修改点：切换状态只影响当前特定选区，不污染全局
         function setSeatStatus(status) {
             const seatKey = document.getElementById('seat-selector').value;
             if (!window.liveScoresData[seatKey]) return;
+            isEditingCurrentSeat = true;
             window.liveScoresData[seatKey].status = status;
             updateStatusButtonsUI(status);
             renderImageCanvas();
@@ -418,7 +469,6 @@
             document.getElementById('view-seat-title-zh').innerText = `${seatKey} ${seat.zh}`;
             document.getElementById('view-seat-title-en').innerText = (seat.en || '').toUpperCase();
 
-            // 数据结构智能自适应及自动升级系统（完美兼容旧数据）
             if (!window.liveScoresData[seatKey] || Array.isArray(window.liveScoresData[seatKey]) || !window.liveScoresData[seatKey].candidates) {
                 const oldArr = Array.isArray(window.liveScoresData[seatKey]) ? window.liveScoresData[seatKey] : [];
                 window.liveScoresData[seatKey] = {
@@ -471,6 +521,7 @@
         function addNewCandidateField() {
             const seatKey = document.getElementById('seat-selector').value;
             if (!window.liveScoresData[seatKey]) return;
+            isEditingCurrentSeat = true;
             window.liveScoresData[seatKey].candidates.push({ nameZh: "独立人士", nameEn: "BEBAS", rawParty: "BEBAS", votes: 0, logoOverride: '' });
             loadSeatData();
         }
@@ -486,15 +537,24 @@
 
         function syncBackupData(seatKey, index, field, value) {
             if (!window.liveScoresData[seatKey]) return;
+            // 标记正在输入
+            isEditingCurrentSeat = true;
             if (field === 'votes') window.liveScoresData[seatKey].candidates[index][field] = parseInt(value) || 0;
             else window.liveScoresData[seatKey].candidates[index][field] = value;
             renderImageCanvas();
         }
 
+        // 【核心】仅抓取并保存单一选区节点
         function manualSaveToLocal() {
-            database.ref('johor_2026_scores/liveScoresData').set(window.liveScoresData)
+            const seatKey = document.getElementById('seat-selector').value;
+            const seatData = window.liveScoresData[seatKey];
+            if(!seatData) return;
+            
+            // 独立节点更新路径：liveScoresData/N35
+            database.ref('johor_2026_scores/liveScoresData/' + seatKey).set(seatData)
                 .then(() => {
-                    alert('🎉 票数及独立选区状态已瞬间广播！所有联机设备画面同步刷新。');
+                    isEditingCurrentSeat = false; // 保存成功后，解锁编辑状态
+                    alert(`🎉 【${seatKey}】的票数及状态已成功独立同步至云端！不影响其他同事的操作。`);
                 })
                 .catch((error) => {
                     alert('❌ 云端同步失败，请检查网络：' + error);
@@ -660,7 +720,6 @@
             return new Promise((resolve) => {
                 const seatKey = forceSeatKey || document.getElementById('seat-selector').value;
                 
-                // 升级点：强制抓取对应选区专属的 live 数据
                 const seatObj = window.liveScoresData[seatKey] || { status: 'unoff-lead', candidates: [] };
                 const seatList = seatObj.candidates || [];
                 const seatStatus = seatObj.status || 'unoff-lead';
@@ -684,7 +743,6 @@
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'middle';
                     
-                    // 根据实际数据渲染大标题
                     const sData = electionData[seatKey];
                     const titleZh = `${seatKey} ${sData.zh}`;
                     const titleEn = " " + (sData.en || '').toUpperCase();
@@ -695,7 +753,8 @@
                     const enW = ctx.measureText(titleEn).width;
                     
                     const totalW = zhW + enW;
-                    const startX = 960 - (totalW / 2); 
+                    // 【修改点】让文字完美贴齐在右侧安全边距(1850)
+                    const startX = 1850 - totalW; 
 
                     ctx.fillStyle = '#0F172A';
                     ctx.font = '900 85px sans-serif'; 
@@ -875,7 +934,6 @@
                         ctx.font = '900 76px Impact, sans-serif';
                         ctx.fillText(majority.toLocaleString(), 150 + majLabelW + 10, 943);
 
-                        // 根据每个选区各自的独立状态绘制底部文本标签
                         let offText = ''; let offColor = '';
                         if (seatStatus === 'unoff-lead') {
                             offText = '非官方成绩'; offColor = '#64748B';
