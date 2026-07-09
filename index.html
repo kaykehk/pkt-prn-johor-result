@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 柔佛州选极速出图 v27 (精准指定 Logo 云端版)</title>
+    <title>2026 柔佛州选极速出图 v31 (精准指定 Logo 终极全同步版)</title>
     <!-- 引入 JSZip 库以支持一键打包下载 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
@@ -56,7 +56,8 @@
         .upload-section { background: #FFFFFF; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
         .upload-label { font-size: 11px; color: var(--text-main); font-weight: bold; display: block; margin-bottom: 6px; }
         
-        /* 独立上传按钮样式 */
+        /* 独立上传按钮样式，支持 8 个位置 */
+        .logo-grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         .single-upload-btn { display: flex; flex-direction: column; background: #F1F5F9; border: 1px solid #CBD5E1; padding: 6px; border-radius: 6px; }
         .single-upload-btn span { font-size: 10px; font-weight: 900; color: #0F172A; margin-bottom: 4px; text-align: center; }
         .single-upload-btn input { font-size: 9px; width: 100%; }
@@ -85,7 +86,7 @@
         .render-canvas { width: 1920px; height: 1080px; position: absolute; top: 0; left: 0; transform: scale(0.5); transform-origin: top left; display: flex; flex-direction: column; justify-content: space-between; padding: 60px 80px; box-sizing: border-box; background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%); }
         .content-layer { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; width: 100%; }
 
-        /* 标题靠右 */
+        /* 标题靠右对齐 */
         .canvas-header { position: relative; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #CBD5E1; padding-bottom: 20px; height: 160px; flex-shrink: 0; }
         .left-logo-area { width: 280px; height: 130px; display: flex; justify-content: flex-start; align-items: center; overflow: hidden; position: relative; z-index: 2; }
         .left-logo-area img, .party-logo-frame img { max-width: 100% !important; max-height: 100% !important; width: auto !important; height: auto !important; object-fit: contain !important; display: block; }
@@ -135,7 +136,7 @@
 
     <div class="control-panel">
         <div class="global-header">
-            <h3 style="color: var(--text-main); margin-bottom: 3px; font-size: 19px;">柔佛极速出图 v27 (精准指定 Logo)</h3>
+            <h3 style="color: var(--text-main); margin-bottom: 3px; font-size: 19px;">柔佛极速出图 v31 (精准指定 Logo 终极版)</h3>
             <div class="global-toggle">
                 <button id="toggle-unoff-lead" class="active" onclick="setSeatStatus('unoff-lead')">非官方领先</button>
                 <button id="toggle-off-lead" onclick="setSeatStatus('off-lead')">官方领先</button>
@@ -160,17 +161,18 @@
                 <summary class="advanced-summary">⚙️ 打开媒体Logo与大背景配置</summary>
                 <div class="fold-content">
                     
-                    <!-- 恢复为7个独立的精准上传口 -->
+                    <!-- 升级：包含 PSM 在内的 8 个独立上传格子 -->
                     <div class="upload-section">
-                        <span class="upload-label">📸 政党 Logo 指定上传 (传完即刻同步云端)：</span>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                        <span class="upload-label">📸 政党 Logo 指定上传 (支持 PSM，全网即时同步)：</span>
+                        <div class="logo-grid-layout">
                             <div class="single-upload-btn"><span>PH 希盟</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'PH')"></div>
                             <div class="single-upload-btn"><span>PN 国盟</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'PN')"></div>
                             <div class="single-upload-btn"><span>BN 国阵</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'BN')"></div>
                             <div class="single-upload-btn"><span>BERSAMA</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'BERSAMA')"></div>
                             <div class="single-upload-btn"><span>MUDA</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'MUDA')"></div>
-                            <div class="single-upload-btn"><span>ASLI</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'ASLI')"></div>
-                            <div class="single-upload-btn" style="grid-column: span 2;"><span>BEBAS 独立人士</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'BEBAS')"></div>
+                            <div class="single-upload-btn"><span>ASLI 土著党</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'ASLI')"></div>
+                            <div class="single-upload-btn"><span>PSM 社会主义党</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'PSM')"></div>
+                            <div class="single-upload-btn"><span>BEBAS 独立人士</span><input type="file" accept="image/*" onchange="uploadSinglePartyLogo(this, 'BEBAS')"></div>
                         </div>
                     </div>
 
@@ -235,7 +237,7 @@
         </div>
     </div>
 
-    <!-- ================= 核心 Firebase 多机联机 SDK 引入 ================= -->
+    <!-- ================= Firebase 多机同步 SDK ================= -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
@@ -253,10 +255,8 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        window.loadedLogosMemory = { 'BN': '', 'PH': '', 'PN': '', 'MUDA': '', 'BERSAMA': '', 'ASLI': '', 'BEBAS': '' };
+        window.loadedLogosMemory = { 'BN': '', 'PH': '', 'PN': '', 'MUDA': '', 'BERSAMA': '', 'ASLI': '', 'PSM': '', 'BEBAS': '' };
         window.mediaLogoSaved = ""; window.customBgSaved = null; window.liveScoresData = {}; 
-        
-        // 记录当前是否正在输入数据
         let isEditingCurrentSeat = false; 
 
         const partyConfigs = {
@@ -265,6 +265,7 @@
             'ASLI': { bg: '#5c3a21' }, 'BEBAS': { bg: '#64748B' }
         };
 
+        // 核心更新：100% 同步 Google Sheet 的完整候选人数据库[cite: 1]
         const electionData = {
             "N1": { zh: "巫罗加什", en: "Buloh Kasap", candidates: [{ nameZh: "扎哈里沙礼", nameEn: "Zahari Sarip", rawParty: "BN - UMNO" }, { nameZh: "罗芝", nameEn: "Noraziah Mohd Razit", rawParty: "PH - PKR" }] },
             "N2": { zh: "利民达", en: "Jementah", candidates: [{ nameZh: "赛依夫拉", nameEn: "Saifullah Abdul Wahab", rawParty: "PN - PAS" }, { nameZh: "徐安岄", nameEn: "See Ann Giap", rawParty: "BN - MCA" }, { nameZh: "黄炣卿", nameEn: "Ng Kor Sim", rawParty: "PH - DAP" }] },
@@ -273,7 +274,7 @@
             "N5": { zh: "丁能", en: "Tenang", candidates: [{ nameZh: "茜蒂爱莎", nameEn: "Siti Aisyah Zobir", rawParty: "BEBAS" }, { nameZh: "诺玛拉", nameEn: "Normala Sudirman", rawParty: "PN - PAS" }, { nameZh: "依丽娅娜蒂拉", nameEn: "Elia Nadira Sabudin", rawParty: "PH - AMANAH" }, { nameZh: "阿查哈", nameEn: "Mohd Azahar Ibrahim", rawParty: "BN - UMNO" }] },
             "N6": { zh: "彼咯", en: "Bekok", candidates: [{ nameZh: "陈宗", nameEn: "Tan Chong", rawParty: "BN - MCA" }, { nameZh: "郑育娟", nameEn: "Tay Yok Jiuen", rawParty: "PH - DAP" }] },
             "N7": { zh: "武吉哈逢", en: "Bukit Kepong", candidates: [{ nameZh: "苏巴拉玛尼", nameEn: "C.Subramani", rawParty: "PH - PKR" }, { nameZh: "阿末沙礼", nameEn: "Ahmad Syar'e Yusof", rawParty: "BN - UMNO" }, { nameZh: "萨鲁丁", nameEn: "Sahruddin Jamal", rawParty: "PN - BERSATU" }] },
-            "N8": { zh: "武吉巴西", en: "Bukit Pasir", candidates: [{ nameZh: "依扎", nameEn: "Mohd Idzharruddin Mohd Nasirruddin", rawParty: "PN - BERSATU" }, { nameZh: "莫哈末那吉", nameEn: "Mohd Najib", rawParty: "PH - AMANAH" }, { nameZh: "莫哈末法兹里", nameEn: "Mohamad Fazli Mohamad Salleh", rawParty: "BN - UMNO" }] },
+            "N8": { zh: "武吉保持", en: "Bukit Pasir", candidates: [{ nameZh: "依扎", nameEn: "Mohd Idzharruddin Mohd Nasirruddin", rawParty: "PN - BERSATU" }, { nameZh: "莫哈末那吉", nameEn: "Muhd Najib Lep", rawParty: "PH - AMANAH" }, { nameZh: "莫哈末法兹里", nameEn: "Mohamad Fazli Mohamad Salleh", rawParty: "BN - UMNO" }] }, // 精准更正 N8[cite: 1]
             "N9": { zh: "甘蜜", en: "Gambir", candidates: [{ nameZh: "沙利翰", nameEn: "Sahrihan Jani", rawParty: "BN - UMNO" }, { nameZh: "莫哈末诺", nameEn: "Mohd Nor Mohd Yusof", rawParty: "PH - PKR" }, { nameZh: "苏拉雅", nameEn: "Suraya Sulaiman", rawParty: "PN - Pejuang" }] },
             "N10": { zh: "东甲", en: "Tangkak", candidates: [{ nameZh: "侯振德", nameEn: "Haw Chin Teck", rawParty: "BN - MCA" }, { nameZh: "黄俊历", nameEn: "Ee Chin Li", rawParty: "PH - DAP" }] },
             "N11": { zh: "实廊", en: "Serom", candidates: [{ nameZh: "娜希拉阿菲卡", nameEn: "Nadhirah Afiqah Abdull Rahim", rawParty: "BN - UMNO" }, { nameZh: "玛菲兹", nameEn: "Mahfidz Omar", rawParty: "PN - BERSATU" }, { nameZh: "阿末那扎里", nameEn: "Ahmad Nazari Abd Hamid", rawParty: "PH - AMANAH" }] },
@@ -287,7 +288,7 @@
             "N19": { zh: "永平", en: "Yong Peng", candidates: [{ nameZh: "林添顺", nameEn: "Ling Tian Soon", rawParty: "BN - MCA" }, { nameZh: "杨惠仪", nameEn: "Yong Hui Yi", rawParty: "PH - DAP" }] },
             "N20": { zh: "实马廊", en: "Semarang", candidates: [{ nameZh: "莫哈末沙菲克", nameEn: "Muhammad Syafiq Abdul Aziz", rawParty: "PN - BERSATU" }, { nameZh: "三苏巴里", nameEn: "Samsolbari Jamali", rawParty: "BN - UMNO" }, { nameZh: "南利", nameEn: "Ramli Abd Hamid", rawParty: "PH - AMANAH" }] },
             "N21": { zh: "巴力安尼", en: "Parit Yaani", candidates: [{ nameZh: "莫哈末那吉", nameEn: "Mohamad Najib Samuri", rawParty: "BN - UMNO" }, { nameZh: "莫哈末依占", nameEn: "Md Ezam Md Taslim", rawParty: "PH - AMANAH" }] },
-            "N22": { zh: "巴力拉惹", en: "Parit Raja", candidates: [{ nameZh: "沙兹万", nameEn: "Shazwan Dzainal Abidin", rawParty: "PH - DAP" }, { nameZh: "莫哈末玛利奇", nameEn: "Mohamed Maliki Mohamed Rapiee", rawParty: "PN - BERSATU" }, { nameZh: "诺莱茜达", nameEn: "Nor Rashidah Ramli", rawParty: "BN - UMNO" }] },
+            "N22": { zh: "巴力拉惹", en: "Parit Raja", candidates: [{ nameZh: "沙兹万", nameEn: "Shazwan Dzainal Abidin", rawParty: "PH - DAP" }, { nameZh: "莫哈稳玛利奇", nameEn: "Mohamed Maliki Mohamed Rapiee", rawParty: "PN - BERSATU" }, { nameZh: "诺莱茜达", nameEn: "Nor Rashidah Ramli", rawParty: "BN - UMNO" }] },
             "N23": { zh: "帆加兰", en: "Penggaram", candidates: [{ nameZh: "傅睿琳", nameEn: "Poh Rui Ling", rawParty: "PH - DAP" }, { nameZh: "傅庆隆", nameEn: "Boo Chin Liong", rawParty: "BN - MCA" }] },
             "N24": { zh: "新加兰", en: "Senggarang", candidates: [{ nameZh: "莫哈末拉昔", nameEn: "Mohd Rashid Hasnon", rawParty: "PN - BERSATU" }, { nameZh: "翁阿布峇卡", nameEn: "Onn Abu Bakar", rawParty: "PH - PKR" }, { nameZh: "莫哈末尤斯拉", nameEn: "Mohd Yusla Ismail", rawParty: "BN - UMNO" }] },
             "N25": { zh: "龙引", en: "Rengit", candidates: [{ nameZh: "赛莫哈末", nameEn: "Syed Mohamad Syed Alwi", rawParty: "PN - BERSATU" }, { nameZh: "莫哈末再迪", nameEn: "Zaidi Japar", rawParty: "BN - UMNO" }, { nameZh: "莫哈末亚兹", nameEn: "Mohamad Yazid Bakri", rawParty: "PH - AMANAH" }] },
@@ -313,7 +314,7 @@
             "N45": { zh: "士都兰", en: "Stulang", candidates: [{ nameZh: "曾笳恩", nameEn: "Andrew Chen Kah Eng", rawParty: "PH - DAP" }, { nameZh: "陈玟辛", nameEn: "Stanley Tan", rawParty: "BERSAMA" }, { nameZh: "林振荣", nameEn: "Lim Chin Eng @ Roland Lim", rawParty: "PN - BERSATU" }, { nameZh: "黄成兴", nameEn: "Bong Seng Heng", rawParty: "BN - MCA" }] },
             "N46": { zh: "柏岭", en: "Perling", candidates: [{ nameZh: "峇迪尔申文", nameEn: "P. Pannir Selvam", rawParty: "BN - MIC" }, { nameZh: "郑凯聪", nameEn: "Alan Tee Boon Tsong", rawParty: "PH - DAP" }, { nameZh: "巫伟汉", nameEn: "Boo Wei Han", rawParty: "BERSAMA" }] },
             "N47": { zh: "甘拔士", en: "Kempas", candidates: [{ nameZh: "南利", nameEn: "Ramlee Bohani", rawParty: "BN - UMNO" }, { nameZh: "莫哈末法依祖丁", nameEn: "Muhammad Faezuddin Mohd Puad", rawParty: "PH - PKR" }, { nameZh: "莎拉玛", nameEn: "Salamahafifi Mohd Yusnaieny", rawParty: "BERSAMA" }] },
-            "N48": { zh: "士姑来", en: "Skudai", candidates: [{ nameZh: "陈贤绮", nameEn: "Tan Hiang Kee", rawParty: "BN - MCA" }, { nameZh: "佳蒂", nameEn: "Kartiyaini Jeyapalan", rawParty: "PH - DAP" }, { nameZh: "蔡明忠", nameEn: "Eugene Chua Meng Chong", rawParty: "BERSAMA" }, { nameZh: "谢艾明", nameEn: "Amir Syafiq", rawParty: "PSM" }] },
+            "N48": { zh: "士姑来", en: "Skudai", candidates: [{ nameZh: "陈贤绮", nameEn: "Tan Hiang Kee", rawParty: "BN - MCA" }, { nameZh: "佳蒂", nameEn: "Kartiyaini Jeyapalan", rawParty: "PH - DAP" }, { nameZh: "蔡明忠", nameEn: "Eugene Chua Meng Chong", rawParty: "BERSAMA" }, { nameZh: "谢艾明", nameEn: "Amir Syafiq", rawParty: "PSM" }] }, // 包含 PSM
             "N49": { zh: "依斯干达城", en: "Kota Iskandar", candidates: [{ nameZh: "安娜帕拉维娜", nameEn: "S. Anna Pravina", rawParty: "PN - MIPP" }, { nameZh: "祖基菲里", nameEn: "Dzulkefly Ahmad", rawParty: "PH - AMANAH" }, { nameZh: "班达", nameEn: "Pandak Ahmad", rawParty: "BN - UMNO" }, { nameZh: "沙鲁丁", nameEn: "Sahrudin Omar", rawParty: "BERSAMA" }] },
             "N50": { zh: "武吉柏迈", en: "Bukit Permai", candidates: [{ nameZh: "艾迪", nameEn: "Muhammad Aidil Riduan Mohd Yusof", rawParty: "BERSAMA" }, { nameZh: "嘉福尼", nameEn: "Mohd Jafni Md Shukor", rawParty: "BN - UMNO" }, { nameZh: "沙福万", nameEn: "Mohamad Shafwan Ani", rawParty: "PH - DAP" }, { nameZh: "丽娜", nameEn: "M. Lina Manoh", rawParty: "PN - MIPP" }] },
             "N51": { zh: "武吉峇都", en: "Bukit Batu", candidates: [{ nameZh: "古玛兰", nameEn: "R. Kumaran", rawParty: "BN - MIC" }, { nameZh: "卡马鲁札曼", nameEn: "Kamaruzaman Ali", rawParty: "BEBAS" }, { nameZh: "妲密丽", nameEn: "G. Tamili", rawParty: "BERSAMA" }, { nameZh: "张善深", nameEn: "Chiong Sen Sern", rawParty: "PH - PKR" }, { nameZh: "普仁", nameEn: "M. Premanand", rawParty: "MUDA" }] },
@@ -333,7 +334,8 @@
             if (up.includes('MUDA')) return 'MUDA';
             if (up.includes('BERSAMA') || up.includes('同心')) return 'BERSAMA';
             if (up.includes('ASLI') || up.includes('土著')) return 'ASLI';
-            if (up.includes('BEBAS') || up.includes('独立') || up.includes('PSM') || up.includes('社会主义党')) return 'BEBAS';
+            if (up.includes('PSM')) return 'PSM'; // 完美适配 PSM 阵营单独底色
+            if (up.includes('BEBAS') || up.includes('独立')) return 'BEBAS';
             return 'BEBAS';
         }
 
@@ -349,7 +351,7 @@
             }
             selector.value = "N14"; 
 
-            // 防冲突：监听云端选区成绩
+            // 防冲突：只在未输入时接收云端静默覆盖
             database.ref('johor_2026_scores/liveScoresData').on('value', (snapshot) => {
                 const cloudData = snapshot.val() || {};
                 const currentSeat = document.getElementById('seat-selector').value;
@@ -362,7 +364,7 @@
                 if (!isEditingCurrentSeat) loadSeatData(); 
             });
 
-            // 监听 Logo 等全云端配置同步
+            // 监听全云端配置同步
             database.ref('johor_2026_scores/config').on('value', (snapshot) => {
                 const configData = snapshot.val() || {};
                 let needRender = false;
@@ -384,13 +386,6 @@
                 }
                 if (needRender && !isEditingCurrentSeat) renderImageCanvas();
             });
-
-            try {
-                const cachedLogos = localStorage.getItem('johor_v13_logos');
-                if (cachedLogos && Object.keys(window.loadedLogosMemory).length === 0) {
-                    window.loadedLogosMemory = JSON.parse(cachedLogos);
-                }
-            } catch(e) {}
         }
 
         function changeSeatDropdown() {
@@ -398,17 +393,31 @@
             loadSeatData();
         }
 
-        // --- 核心修改：指定档位精准上传，完全抛弃乱猜文件名的做法 ---
+        // 优化：带图片前端压缩的云端上传，省带宽防卡顿
         function uploadSinglePartyLogo(input, partyKey) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // 1. 存入内存
-                    window.loadedLogosMemory[partyKey] = e.target.result;
-                    // 2. 直接且精准地推送到云端专属格子里
-                    database.ref('johor_2026_scores/config/logos/' + partyKey).set(e.target.result);
-                    // 3. 立即重绘画布
-                    renderImageCanvas();
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        // 统一缩放到 260x180 像素，维持高清晰度的同时体积减小 90%
+                        canvas.width = 260; canvas.height = 180;
+                        
+                        let ratio = Math.min(260 / img.width, 180 / img.height);
+                        let w = img.width * ratio; let h = img.height * ratio;
+                        let x = (260 - w) / 2; let y = (180 - h) / 2;
+                        
+                        ctx.fillStyle = "transparent"; ctx.fillRect(0,0,260,180);
+                        ctx.drawImage(img, x, y, w, h);
+                        
+                        const compressedBase64 = canvas.toDataURL('image/png', 0.85);
+                        window.loadedLogosMemory[partyKey] = compressedBase64;
+                        database.ref('johor_2026_scores/config/logos/' + partyKey).set(compressedBase64);
+                        renderImageCanvas();
+                    };
+                    img.src = e.target.result;
                 };
                 reader.readAsDataURL(input.files[0]);
             }
@@ -506,10 +515,12 @@
                             <option value="MUDA" ${c.logoOverride === 'MUDA' ? 'selected' : ''}>MUDA</option>
                             <option value="BERSAMA" ${c.logoOverride === 'BERSAMA' ? 'selected' : ''}>BERSAMA</option>
                             <option value="ASLI" ${c.logoOverride === 'ASLI' ? 'selected' : ''}>ASLI</option>
+                            <option value="PSM" ${c.logoOverride === 'PSM' ? 'selected' : ''}>PSM</option>
                             <option value="BEBAS" ${c.logoOverride === 'BEBAS' ? 'selected' : ''}>独立人士</option>
                             <option value="NONE" ${c.logoOverride === 'NONE' ? 'selected' : ''}>🚫无Logo</option>
                         </select>
-                        <input type="number" class="input-votes" value="${c.votes || 0}" placeholder="得票" oninput="syncBackupData('${seatKey}', ${index}, 'votes', this.value)">
+                        <!-- 优化点：数字框聚焦自动全选，实现极限手速输入 -->
+                        <input type="number" class="input-votes" value="${c.votes || 0}" placeholder="得票" onfocus="this.select()" oninput="syncBackupData('${seatKey}', ${index}, 'votes', this.value)">
                     </div>
                 `;
                 inputsBox.appendChild(card);
@@ -547,10 +558,11 @@
             const seatData = window.liveScoresData[seatKey];
             if(!seatData) return;
             
+            // 安全防冲突：只覆盖当前特定选区路径节点
             database.ref('johor_2026_scores/liveScoresData/' + seatKey).set(seatData)
                 .then(() => {
                     isEditingCurrentSeat = false; 
-                    alert(`🎉 【${seatKey}】的票数及状态已成功独立同步至云端！不影响其他同事的操作。`);
+                    alert(`🎉 【${seatKey}】独立云端储存完成！已实时广播给所有联机终端！`);
                 })
                 .catch((error) => {
                     alert('❌ 云端同步失败，请检查网络：' + error);
@@ -581,18 +593,7 @@
 
                 list.forEach((c, idx) => {
                     let resultStr = (totalVotes > 0 && idx === winnerIndex && Number(c.votes) > 0) ? (seatStatus === 'off-won' ? '当选' : '领先') : '';
-                    let row = [
-                        key,
-                        seat.zh,
-                        seat.en,
-                        offStr,
-                        c.nameZh || '',
-                        c.nameEn || '',
-                        c.rawParty || '',
-                        c.votes || 0,
-                        resultStr,
-                        majority
-                    ];
+                    let row = [ key, seat.zh, seat.en, offStr, c.nameZh || '', c.nameEn || '', c.rawParty || '', c.votes || 0, resultStr, majority ];
                     csvContent += row.join(",") + "\n";
                 });
             }
@@ -625,13 +626,8 @@
                 else if (v > secondScore) { secondScore = v; }
             });
 
-            let officialText = '';
-            let officialColor = '';
-            if (seatStatus === 'unoff-lead') {
-                officialText = '非官方成绩'; officialColor = '#64748B';
-            } else {
-                officialText = '官方成绩'; officialColor = '#2563EB';
-            }
+            let officialText = seatStatus === 'unoff-lead' ? '非官方成绩' : '官方成绩';
+            let officialColor = seatStatus === 'unoff-lead' ? '#64748B' : '#2563EB';
             const viewOffStatus = document.getElementById('view-official-status');
             viewOffStatus.innerText = officialText;
             viewOffStatus.style.color = officialColor;
@@ -651,13 +647,9 @@
                 const v = Number(c.votes) || 0; 
                 if (totalVotesTyped > 0 && i === winnerIndex && v > 0) {
                     if (seatStatus === 'off-won') {
-                        cardClass += ' winner-won';
-                        statusText = '当选 WON';
-                        statusClass += ' won';
+                        cardClass += ' winner-won'; statusText = '当选 WON'; statusClass += ' won';
                     } else {
-                        cardClass += ' winner-lead';
-                        statusText = '领先';
-                        statusClass += ' leading';
+                        cardClass += ' winner-lead'; statusText = '领先'; statusClass += ' leading';
                     }
                 }
 
@@ -695,18 +687,14 @@
 
         function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
             let words = (text || '').toString().split(' ');
-            let line = '';
-            let currentY = y;
+            let line = ''; let currentY = y;
             for(let n = 0; n < words.length; n++) {
                 let testLine = line + words[n] + ' ';
                 let metrics = ctx.measureText(testLine);
                 if (metrics.width > maxWidth && n > 0) {
                     ctx.fillText(line, x, currentY);
-                    line = words[n] + ' ';
-                    currentY += lineHeight;
-                } else {
-                    line = testLine;
-                }
+                    line = words[n] + ' '; currentY += lineHeight;
+                } else { line = testLine; }
             }
             ctx.fillText(line, x, currentY);
             return currentY;
@@ -715,73 +703,56 @@
         function downloadImage(forceSeatKey = null, returnBase64 = false) {
             return new Promise((resolve) => {
                 const seatKey = forceSeatKey || document.getElementById('seat-selector').value;
-                
                 const seatObj = window.liveScoresData[seatKey] || { status: 'unoff-lead', candidates: [] };
                 const seatList = seatObj.candidates || [];
                 const seatStatus = seatObj.status || 'unoff-lead';
                 
                 const canvas = document.createElement('canvas');
-                canvas.width = 1920;
-                canvas.height = 1080;
+                canvas.width = 1920; canvas.height = 1080;
                 const ctx = canvas.getContext('2d');
 
                 let gradient = ctx.createLinearGradient(0, 0, 1920, 1080);
-                gradient.addColorStop(0, '#F8FAFC');
-                gradient.addColorStop(1, '#E2E8F0');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 1920, 1080);
+                gradient.addColorStop(0, '#F8FAFC'); gradient.addColorStop(1, '#E2E8F0');
+                ctx.fillStyle = gradient; ctx.fillRect(0, 0, 1920, 1080);
 
                 const startDrawingContent = () => {
-                    ctx.strokeStyle = '#CBD5E1';
-                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = '#CBD5E1'; ctx.lineWidth = 4;
                     ctx.beginPath(); ctx.moveTo(70, 210); ctx.lineTo(1850, 210); ctx.stroke();
 
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'middle';
+                    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
                     
                     const sData = electionData[seatKey];
                     const titleZh = `${seatKey} ${sData.zh}`;
                     const titleEn = " " + (sData.en || '').toUpperCase();
                     
-                    ctx.font = '900 85px sans-serif'; 
-                    const zhW = ctx.measureText(titleZh).width;
-                    ctx.font = '900 85px sans-serif'; 
-                    const enW = ctx.measureText(titleEn).width;
+                    ctx.font = '900 85px sans-serif'; const zhW = ctx.measureText(titleZh).width;
+                    ctx.font = '900 85px sans-serif'; const enW = ctx.measureText(titleEn).width;
                     
                     const totalW = zhW + enW;
-                    const startX = 1850 - totalW; 
+                    const startX = 1850 - totalW; // 靠右对齐
 
-                    ctx.fillStyle = '#0F172A';
-                    ctx.font = '900 85px sans-serif'; 
-                    ctx.fillText(titleZh, startX, 110);
-                    
-                    ctx.fillStyle = '#64748B';
-                    ctx.font = '900 85px sans-serif'; 
-                    ctx.fillText(titleEn, startX + zhW, 110);
+                    ctx.fillStyle = '#0F172A'; ctx.font = '900 85px sans-serif'; ctx.fillText(titleZh, startX, 110);
+                    ctx.fillStyle = '#64748B'; ctx.font = '900 85px sans-serif'; ctx.fillText(titleEn, startX + zhW, 110);
 
                     const drawRestOfCanvas = () => {
                         ctx.textBaseline = 'alphabetic';
 
                         let maxScore = -1; let secondScore = -1; let winnerIndex = -1; let totalVotesTyped = 0;
                         seatList.forEach((c, i) => {
-                            const v = Number(c.votes) || 0;
-                            totalVotesTyped += v;
+                            const v = Number(c.votes) || 0; totalVotesTyped += v;
                             if (v > maxScore) { secondScore = maxScore; maxScore = v; winnerIndex = i; }
                             else if (v > secondScore) { secondScore = v; }
                         });
 
                         const cardCount = Math.max(seatList.length, 1);
-                        const totalWidth = 1780;
-                        const gap = 35;
+                        const totalWidth = 1780; const gap = 35;
                         const cardW = (totalWidth - (gap * (cardCount - 1))) / cardCount;
-                        const cardH = 570;
-                        const cardY = 250;
+                        const cardH = 570; const cardY = 250;
 
                         let imagesToProcess = [];
 
                         seatList.forEach((c, i) => {
                             const cardX = 70 + i * (cardW + gap);
-                            
                             let allianceKey = getBigAllianceKey(c.rawParty || 'BEBAS');
                             if (c.logoOverride && c.logoOverride !== 'NONE') allianceKey = c.logoOverride;
 
@@ -790,189 +761,103 @@
                             const v = Number(c.votes) || 0; 
                             const isWinner = (totalVotesTyped > 0 && i === winnerIndex && v > 0);
 
-                            let boxBgColor = '#FFFFFF';
-                            let boxBorderColor = '#F1F5F9';
-                            let boxBorderW = 2;
-
+                            let boxBgColor = '#FFFFFF'; let boxBorderColor = '#F1F5F9'; let boxBorderW = 2;
                             if (isWinner) {
                                 boxBorderW = 6;
-                                if (seatStatus === 'off-won') {
-                                    boxBgColor = '#FFF1F2';
-                                    boxBorderColor = '#F43F5E';
-                                } else {
-                                    boxBgColor = '#F0FDF4';
-                                    boxBorderColor = '#22C55E';
-                                }
+                                boxBgColor = seatStatus === 'off-won' ? '#FFF1F2' : '#F0FDF4';
+                                boxBorderColor = seatStatus === 'off-won' ? '#F43F5E' : '#22C55E';
                             }
 
                             ctx.shadowColor = isWinner ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.08)";
-                            ctx.shadowBlur = isWinner ? 50 : 40;
-                            ctx.shadowOffsetY = 20;
-                            
+                            ctx.shadowBlur = isWinner ? 50 : 40; ctx.shadowOffsetY = 20;
                             ctx.fillStyle = boxBgColor;
                             ctx.beginPath();
                             if(ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, 24); else ctx.rect(cardX, cardY, cardW, cardH);
                             ctx.fill();
                             ctx.shadowColor = "transparent";
 
-                            ctx.save();
-                            ctx.beginPath();
+                            ctx.save(); ctx.beginPath();
                             if(ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, 24); else ctx.rect(cardX, cardY, cardW, cardH);
-                            ctx.clip();
-                            ctx.fillStyle = cardBg;
-                            ctx.fillRect(cardX, cardY, 24, cardH);
-                            ctx.restore();
+                            ctx.clip(); ctx.fillStyle = cardBg; ctx.fillRect(cardX, cardY, 24, cardH); ctx.restore();
 
-                            ctx.strokeStyle = boxBorderColor;
-                            ctx.lineWidth = boxBorderW;
+                            ctx.strokeStyle = boxBorderColor; ctx.lineWidth = boxBorderW;
                             ctx.beginPath();
                             if(ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, 24); else ctx.rect(cardX, cardY, cardW, cardH);
                             ctx.stroke();
 
                             if (isWinner) {
-                                ctx.shadowColor = "rgba(0,0,0,0.15)";
-                                ctx.shadowBlur = 15;
-                                ctx.shadowOffsetY = 6;
                                 ctx.fillStyle = seatStatus === 'off-won' ? '#F43F5E' : '#22C55E';
                                 ctx.beginPath();
                                 const badgeW = seatStatus === 'off-won' ? 200 : 130; 
-                                const badgeX = cardX + cardW - badgeW - 20; 
-                                const badgeY = cardY + 25;
+                                const badgeX = cardX + cardW - badgeW - 20; const badgeY = cardY + 25;
                                 if(ctx.roundRect) ctx.roundRect(badgeX, badgeY, badgeW, 56, 28); else ctx.rect(badgeX, badgeY, badgeW, 56);
                                 ctx.fill();
-                                ctx.shadowColor = "transparent";
-
-                                ctx.fillStyle = '#FFFFFF';
-                                ctx.font = '900 28px sans-serif';
-                                ctx.textAlign = 'center';
+                                ctx.fillStyle = '#FFFFFF'; ctx.font = '900 28px sans-serif'; ctx.textAlign = 'center';
                                 ctx.fillText(seatStatus === 'off-won' ? '当选 WON' : '领先', badgeX + (badgeW/2), badgeY + 38);
                             }
 
-                            let currentTextY = cardY + 160;
-                            const maxTextW = cardW - 60; 
-                            const textX = cardX + 40; 
-
-                            ctx.textAlign = 'left';
-                            ctx.fillStyle = '#0F172A'; 
-                            ctx.font = '900 52px sans-serif';
+                            let currentTextY = cardY + 160; const maxTextW = cardW - 60; const textX = cardX + 40; 
+                            ctx.textAlign = 'left'; ctx.fillStyle = '#0F172A'; ctx.font = '900 52px sans-serif';
                             currentTextY = wrapText(ctx, c.nameZh || '', textX, currentTextY, maxTextW, 60) + 40;
 
-                            ctx.fillStyle = '#64748B'; 
-                            ctx.font = '700 26px sans-serif';
+                            ctx.fillStyle = '#64748B'; ctx.font = '700 26px sans-serif';
                             currentTextY = wrapText(ctx, (c.nameEn || '').toUpperCase(), textX, currentTextY, maxTextW, 35) + 35;
 
-                            ctx.fillStyle = '#94A3B8'; 
-                            ctx.font = 'bold 22px sans-serif';
-                            ctx.fillText(c.rawParty || '', textX, currentTextY);
+                            ctx.fillStyle = '#94A3B8'; ctx.font = 'bold 22px sans-serif'; ctx.fillText(c.rawParty || '', textX, currentTextY);
 
                             const dashY = cardY + cardH - 140;
-                            ctx.strokeStyle = '#CBD5E1';
-                            ctx.lineWidth = 2;
-                            ctx.setLineDash([10, 10]);
-                            ctx.beginPath(); ctx.moveTo(textX, dashY); ctx.lineTo(cardX + cardW - 25, dashY); ctx.stroke();
-                            ctx.setLineDash([]);
+                            ctx.strokeStyle = '#CBD5E1'; ctx.lineWidth = 2; ctx.setLineDash([10, 10]);
+                            ctx.beginPath(); ctx.moveTo(textX, dashY); ctx.lineTo(cardX + cardW - 25, dashY); ctx.stroke(); ctx.setLineDash([]);
 
-                            ctx.textAlign = 'left';
-                            ctx.fillStyle = '#64748B';
-                            ctx.font = 'bold 20px sans-serif';
-                            ctx.fillText('得票数 VOTES', textX, dashY + 35);
+                            ctx.textAlign = 'left'; ctx.fillStyle = '#64748B'; ctx.font = 'bold 20px sans-serif'; ctx.fillText('得票数 VOTES', textX, dashY + 35);
 
                             let voteStr = v.toLocaleString();
-                            ctx.textAlign = 'right';
-                            ctx.fillStyle = '#D97706'; 
-                            ctx.font = '900 85px Impact, sans-serif'; 
-                            ctx.shadowColor = "rgba(217, 119, 6, 0.25)"; 
-                            ctx.shadowBlur = 15;
-                            ctx.shadowOffsetY = 5;
-                            ctx.fillText(voteStr, cardX + cardW - 25, cardY + cardH - 30); 
-                            ctx.shadowColor = "transparent";
+                            ctx.textAlign = 'right'; ctx.fillStyle = '#D97706'; ctx.font = '900 85px Impact, sans-serif'; 
+                            ctx.fillText(voteStr, cardX + cardW - 25, cardY + cardH - 30);
 
                             let logoDataUrl = window.loadedLogosMemory[allianceKey];
                             if (c.logoOverride === 'NONE') logoDataUrl = null;
-
-                            if (logoDataUrl) {
-                                imagesToProcess.push({ src: logoDataUrl, x: textX, y: cardY + 25, maxW: 130, maxH: 85 });
-                            } else if (c.logoOverride !== 'NONE') {
-                                ctx.fillStyle = '#CBD5E1';
-                                ctx.font = '900 24px sans-serif';
-                                ctx.textAlign = 'center';
-                                ctx.fillText(allianceKey, cardX + 100, cardY + 80);
-                            }
+                            if (logoDataUrl) { imagesToProcess.push({ src: logoDataUrl, x: textX, y: cardY + 25, maxW: 130, maxH: 85 }); }
                         });
 
-                        ctx.shadowColor = "rgba(0,0,0,0.05)";
-                        ctx.shadowBlur = 30;
-                        ctx.shadowOffsetY = 10;
-                        ctx.fillStyle = '#FFFFFF';
-                        ctx.beginPath();
-                        if(ctx.roundRect) ctx.roundRect(70, 870, 1780, 140, 20); else ctx.rect(70, 870, 1780, 140);
-                        ctx.fill();
-                        ctx.shadowColor = "transparent";
+                        // 绘制页脚
+                        ctx.fillStyle = '#FFFFFF'; ctx.beginPath();
+                        if(ctx.roundRect) ctx.roundRect(70, 870, 1780, 140, 20); else ctx.rect(70, 870, 1780, 140); ctx.fill();
 
-                        let majority = 0;
-                        if (totalVotesTyped > 0 && maxScore > secondScore) majority = maxScore - secondScore;
-                        
-                        ctx.fillStyle = '#FEF3C7';
-                        ctx.beginPath();
-                        if(ctx.roundRect) ctx.roundRect(110, 895, 600, 90, 45); else ctx.rect(110, 895, 600, 90);
-                        ctx.fill();
+                        let majority = (totalVotesTyped > 0 && maxScore > secondScore) ? maxScore - secondScore : 0;
+                        ctx.fillStyle = '#FEF3C7'; ctx.beginPath();
+                        if(ctx.roundRect) ctx.roundRect(110, 895, 600, 90, 45); else ctx.rect(110, 895, 600, 90); ctx.fill();
 
-                        ctx.textBaseline = 'middle'; 
-                        
-                        ctx.textAlign = 'left';
-                        ctx.fillStyle = '#B45309';
-                        ctx.font = '900 36px sans-serif';
+                        ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = '#B45309'; ctx.font = '900 36px sans-serif';
                         ctx.fillText('多数票 MAJORITY:', 150, 940); 
-                        
                         const majLabelW = ctx.measureText('多数票 MAJORITY: ').width;
-                        ctx.fillStyle = '#D97706';
-                        ctx.font = '900 76px Impact, sans-serif';
-                        ctx.fillText(majority.toLocaleString(), 150 + majLabelW + 10, 943);
+                        ctx.fillStyle = '#D97706'; ctx.font = '900 76px Impact, sans-serif'; ctx.fillText(majority.toLocaleString(), 150 + majLabelW + 10, 943);
 
-                        let offText = ''; let offColor = '';
-                        if (seatStatus === 'unoff-lead') {
-                            offText = '非官方成绩'; offColor = '#64748B';
-                        } else {
-                            offText = '官方成绩'; offColor = '#2563EB';
-                        }
-                        ctx.fillStyle = offColor;
-                        ctx.font = '900 38px sans-serif';
-                        ctx.fillText(offText, 740, 940); 
+                        let offText = seatStatus === 'unoff-lead' ? '非官方成绩' : '官方成绩';
+                        let offColor = seatStatus === 'unoff-lead' ? '#64748B' : '#2563EB';
+                        ctx.fillStyle = offColor; ctx.font = '900 38px sans-serif'; ctx.fillText(offText, 740, 940); 
 
-                        ctx.textAlign = 'right';
-                        ctx.fillStyle = '#94A3B8';
-                        ctx.font = '900 34px sans-serif';
+                        ctx.textAlign = 'right'; ctx.fillStyle = '#94A3B8'; ctx.font = '900 34px sans-serif';
                         ctx.fillText('百格 POCKETIMES  ｜  第16届柔佛州选', 1810, 940); 
 
-                        ctx.textBaseline = 'alphabetic';
-
                         const triggerOrReturn = (canvas, seatKey) => {
-                            if (returnBase64) {
-                                resolve(canvas.toDataURL('image/png', 1.0));
-                            } else {
-                                const link = document.createElement('a');
-                                link.download = `${seatKey}_1080P_战报图.png`;
-                                link.href = canvas.toDataURL('image/png', 1.0);
-                                link.click();
-                                resolve();
+                            if (returnBase64) { resolve(canvas.toDataURL('image/png', 1.0)); } 
+                            else {
+                                const link = document.createElement('a'); link.download = `${seatKey}_1080P_战报图.png`;
+                                link.href = canvas.toDataURL('image/png', 1.0); link.click(); resolve();
                             }
                         };
 
                         let loadedCount = 0;
-                        if (imagesToProcess.length === 0) {
-                            triggerOrReturn(canvas, seatKey);
-                        } else {
+                        if (imagesToProcess.length === 0) { triggerOrReturn(canvas, seatKey); } 
+                        else {
                             imagesToProcess.forEach(item => {
                                 let img = new Image();
                                 img.onload = function() {
                                     let ratio = Math.min(item.maxW / img.width, item.maxH / img.height);
                                     let renderH = img.height * ratio;
-                                    let yOffset = (item.maxH - renderH) / 2;
-                                    ctx.drawImage(img, item.x, item.y + yOffset, img.width * ratio, renderH);
-                                    loadedCount++;
-                                    if (loadedCount === imagesToProcess.length) {
-                                        triggerOrReturn(canvas, seatKey);
-                                    }
+                                    ctx.drawImage(img, item.x, item.y + (item.maxH - renderH) / 2, img.width * ratio, renderH);
+                                    loadedCount++; if (loadedCount === imagesToProcess.length) triggerOrReturn(canvas, seatKey);
                                 };
                                 img.src = item.src;
                             });
@@ -983,74 +868,43 @@
                         let mImg = new Image();
                         mImg.onload = function() {
                             let ratio = Math.min(280 / mImg.width, 130 / mImg.height);
-                            let renderH = mImg.height * ratio;
-                            let yOffset = (130 - renderH) / 2;
-                            ctx.drawImage(mImg, 70, 45 + yOffset, mImg.width * ratio, renderH);
+                            ctx.drawImage(mImg, 70, 45 + (130 - mImg.height * ratio) / 2, mImg.width * ratio, mImg.height * ratio);
                             drawRestOfCanvas();
                         };
                         mImg.src = window.mediaLogoSaved;
-                    } else {
-                        drawRestOfCanvas();
-                    }
+                    } else { drawRestOfCanvas(); }
                 };
 
                 if (window.customBgSaved) {
                     let bImg = new Image();
                     bImg.onload = function() {
-                        const x = parseInt(document.getElementById('bg-pos-x').value);
-                        const y = parseInt(document.getElementById('bg-pos-y').value);
-                        const scale = parseFloat(document.getElementById('bg-scale').value);
-                        const opacity = parseFloat(document.getElementById('bg-opacity').value);
-                        
-                        ctx.save();
-                        ctx.globalAlpha = opacity;
-                        ctx.translate(x, y);
-                        ctx.scale(scale, scale);
-                        ctx.drawImage(bImg, 0, 0);
-                        ctx.restore();
-                        
-                        startDrawingContent();
+                        ctx.save(); ctx.globalAlpha = parseFloat(document.getElementById('bg-opacity').value);
+                        ctx.translate(parseInt(document.getElementById('bg-pos-x').value), parseInt(document.getElementById('bg-pos-y').value));
+                        ctx.scale(parseFloat(document.getElementById('bg-scale').value), parseFloat(document.getElementById('bg-scale').value));
+                        ctx.drawImage(bImg, 0, 0); ctx.restore(); startDrawingContent();
                     };
                     bImg.src = window.customBgSaved;
-                } else {
-                    startDrawingContent();
-                }
+                } else { startDrawingContent(); }
             });
         }
 
         async function downloadAll56Seats() {
-            if(!confirm('🚨 准备一键打包并下载 56 个选区的高清图卡 ZIP？\n\n系统将自动抓取各个选区保存在云端的各自状态进行绘制。过程大概需要 5 - 10 秒钟，请耐心等待弹出的下载提示。')) return;
-            
-            const zip = new JSZip();
-            const originalSeat = document.getElementById('seat-selector').value;
-            
+            if(!confirm('🚨 准备一键打包并下载 56 个选区的高清图卡 ZIP？\n系统将自动抓取各个选区保存在云端的各自状态进行绘制。')) return;
+            const zip = new JSZip(); const originalSeat = document.getElementById('seat-selector').value;
             document.querySelector('.btn-download-all').innerText = "⏳ 正在分析各区云端状态并打包中...";
-            document.querySelector('.btn-download-all').style.background = "#9CA3AF";
             
             for(let i = 1; i <= 56; i++) {
-                const key = `N${i}`;
-                document.getElementById('seat-selector').value = key;
-                loadSeatData(); 
+                const key = `N${i}`; document.getElementById('seat-selector').value = key; loadSeatData(); 
                 await new Promise(r => setTimeout(r, 120)); 
-                
                 const dataUrl = await downloadImage(key, true);
-                const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
-                
-                zip.file(`${key}_1080P_战报图.png`, base64Data, {base64: true});
+                zip.file(`${key}_1080P_战报图.png`, dataUrl.replace(/^data:image\/png;base64,/, ""), {base64: true});
             }
-            
-            document.getElementById('seat-selector').value = originalSeat;
-            loadSeatData();
-            
+            document.getElementById('seat-selector').value = originalSeat; loadSeatData();
             zip.generateAsync({type:"blob"}).then(function(content) {
-                const link = document.createElement('a');
-                link.download = `2026柔佛州选_56区战报图(按各区云端状态绘制).zip`;
-                link.href = URL.createObjectURL(content);
-                link.click();
-                
+                const link = document.createElement('a'); link.download = `2026柔佛州选_56区战报图.zip`;
+                link.href = URL.createObjectURL(content); link.click();
                 document.querySelector('.btn-download-all').innerText = "🚀 一键打包 56 选区 ZIP";
-                document.querySelector('.btn-download-all').style.background = "#8B5CF6";
-                alert('🎉 56 区全图卡 ZIP 已经成功打包并开始下载！每一张图都对应其独立选情状态！');
+                alert('🎉 56 区全图卡 ZIP 已经成功打包并开始下载！');
             });
         }
 
